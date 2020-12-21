@@ -39,6 +39,8 @@ import static org.apache.dubbo.common.constants.CommonConstants.TIME_COUNTDOWN_K
  *
  * @see org.apache.dubbo.rpc.Filter
  * @see RpcContext
+ *
+ * 该过滤器做的是在当前的RpcContext中记录本地调用的一次状态信息。
  */
 @Activate(group = CONSUMER, order = -10000)
 public class ConsumerContextFilter implements Filter {

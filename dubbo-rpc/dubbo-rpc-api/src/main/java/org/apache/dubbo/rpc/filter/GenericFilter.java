@@ -51,6 +51,8 @@ import static org.apache.dubbo.rpc.Constants.GENERIC_KEY;
 
 /**
  * GenericInvokerFilter.
+ *
+ * 该过滤器就是对于泛化调用的请求和结果进行反序列化和序列化的操作，它是服务提供者侧的。
  */
 @Activate(group = CommonConstants.PROVIDER, order = -20000)
 public class GenericFilter implements Filter, Filter.Listener {

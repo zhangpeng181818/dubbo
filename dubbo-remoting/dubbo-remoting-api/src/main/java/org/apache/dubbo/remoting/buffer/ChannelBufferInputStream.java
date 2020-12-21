@@ -20,10 +20,21 @@ package org.apache.dubbo.remoting.buffer;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * 该类继承了InputStream
+ */
 public class ChannelBufferInputStream extends InputStream {
-
+    /**
+     * 缓冲区
+     */
     private final ChannelBuffer buffer;
+    /**
+     * 记录开始读数据的索引
+     */
     private final int startIndex;
+    /**
+     * 结束读数据的索引
+     */
     private final int endIndex;
 
     public ChannelBufferInputStream(ChannelBuffer buffer) {
@@ -46,11 +57,11 @@ public class ChannelBufferInputStream extends InputStream {
         endIndex = startIndex + length;
         buffer.markReaderIndex();
     }
-
+//    该方法是返回读了多少数据。
     public int readBytes() {
         return buffer.readerIndex() - startIndex;
     }
-
+//该方法是返回还剩多少数据没读
     @Override
     public int available() throws IOException {
         return endIndex - buffer.readerIndex();
@@ -73,14 +84,15 @@ public class ChannelBufferInputStream extends InputStream {
         }
         return buffer.readByte() & 0xff;
     }
-
+//该方法是读数据，返回读了数据长度。
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
+        // 判断是否还有数据可读
         int available = available();
         if (available == 0) {
             return -1;
         }
-
+// 获得需要读取的数据长度
         len = Math.min(available, len);
         buffer.readBytes(b, off, len);
         return len;
@@ -99,9 +111,10 @@ public class ChannelBufferInputStream extends InputStream {
             return skipBytes((int) n);
         }
     }
-
+//    该方法是跳过n长度来读数据
     private int skipBytes(int n) throws IOException {
         int nBytes = Math.min(available(), n);
+        // 跳过一些数据
         buffer.skipBytes(nBytes);
         return nBytes;
     }

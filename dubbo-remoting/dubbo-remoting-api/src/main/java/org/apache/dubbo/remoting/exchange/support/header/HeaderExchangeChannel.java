@@ -38,15 +38,25 @@ import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
 
 /**
  * ExchangeReceiver
+ * <p>
+ * 该类实现了ExchangeChannel，是基于协议头的信息交换通道。
  */
 final class HeaderExchangeChannel implements ExchangeChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(HeaderExchangeChannel.class);
 
+    /**
+     * 通道的key值
+     */
     private static final String CHANNEL_KEY = HeaderExchangeChannel.class.getName() + ".CHANNEL";
-
+    /**
+     * 通道
+     */
     private final Channel channel;
 
+    /**
+     * 是否关闭
+     */
     private volatile boolean closed = false;
 
     HeaderExchangeChannel(Channel channel) {
@@ -60,18 +70,24 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         if (ch == null) {
             return null;
         }
+        // 获得通道中的HeaderExchangeChannel
         HeaderExchangeChannel ret = (HeaderExchangeChannel) ch.getAttribute(CHANNEL_KEY);
         if (ret == null) {
+            // 创建一个HeaderExchangeChannel实例
             ret = new HeaderExchangeChannel(ch);
+            // 如果通道连接
             if (ch.isConnected()) {
+                // 加入属性值
                 ch.setAttribute(CHANNEL_KEY, ret);
             }
         }
         return ret;
     }
-
+//    该静态方法做了HeaderExchangeChannel的创建和销毁，并且生命周期随channel销毁而销毁。
     static void removeChannelIfDisconnected(Channel ch) {
+        // 如果通道断开连接
         if (ch != null && !ch.isConnected()) {
+            // 移除属性值
             ch.removeAttribute(CHANNEL_KEY);
         }
     }
@@ -87,20 +103,31 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         send(message, false);
     }
 
+    /**
+     * 该方法是在channel的send方法上加上了request和response模型，最后再调用channel.send，起到了装饰器的作用。
+     */
     @Override
     public void send(Object message, boolean sent) throws RemotingException {
+        // 如果通道关闭，抛出异常
         if (closed) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send message " + message + ", cause: The channel " + this + " is closed!");
         }
+        // 判断消息的类型
         if (message instanceof Request
                 || message instanceof Response
                 || message instanceof String) {
+            // 发送消息
             channel.send(message, sent);
         } else {
+            // 新建一个request实例
             Request request = new Request();
+            // 设置信息的版本
             request.setVersion(Version.getProtocolVersion());
+            // 该请求不需要响应
             request.setTwoWay(false);
+            // 把消息传入
             request.setData(message);
+            // 发送消息
             channel.send(request, sent);
         }
     }
@@ -120,16 +147,25 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         return request(request, channel.getUrl().getPositiveParameter(TIMEOUT_KEY, DEFAULT_TIMEOUT), executor);
     }
 
+    /**
+     * 该方法是请求方法，用Request模型把请求内容装饰起来，然后发送一个Request类型的消息，并且返回DefaultFuture实例，
+     * DefaultFuture我会在后面讲到。
+     *
+     */
     @Override
     public CompletableFuture<Object> request(Object request, int timeout, ExecutorService executor) throws RemotingException {
+        // 如果通道关闭，则抛出异常
         if (closed) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send request " + request + ", cause: The channel " + this + " is closed!");
         }
-        // create request.
+        // create request.创建请求
         Request req = new Request();
+        // 设置版本号
         req.setVersion(Version.getProtocolVersion());
+        // 设置需要响应
         req.setTwoWay(true);
         req.setData(request);
+        // 创建DefaultFuture对象，可以从future中主动获得请求对应的响应信息
         DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout, executor);
         try {
             channel.send(req);
@@ -139,12 +175,12 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         }
         return future;
     }
-
     @Override
     public boolean isClosed() {
         return closed;
     }
 
+//   cloes方法也重写了，我就不再多说，因为比较简单，没有重点，其他方法都是直接调用channel属性的方法。
     @Override
     public void close() {
         try {

@@ -34,6 +34,7 @@ public interface Exchanger {
 
     /**
      * bind.
+     * 绑定一个服务器
      *
      * @param url
      * @param handler
@@ -44,7 +45,7 @@ public interface Exchanger {
 
     /**
      * connect.
-     *
+     * 连接一个服务器，也就是创建一个客户端
      * @param url
      * @param handler
      * @return message channel

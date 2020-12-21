@@ -29,20 +29,59 @@ import java.util.concurrent.atomic.AtomicLong;
  * @see org.apache.dubbo.rpc.filter.ActiveLimitFilter
  * @see org.apache.dubbo.rpc.filter.ExecuteLimitFilter
  * @see org.apache.dubbo.rpc.cluster.loadbalance.LeastActiveLoadBalance
+ *
+ * 该类是rpc的一些状态监控，其中封装了许多的计数器，用来记录rpc调用的状态
  */
 public class RpcStatus {
+    /**
+     * uri对应的状态集合，key为uri，value为RpcStatus对象
+     */
 
     private static final ConcurrentMap<String, RpcStatus> SERVICE_STATISTICS = new ConcurrentHashMap<String, RpcStatus>();
+    /**
+     * method对应的状态集合，key是uri，第二个key是方法名methodName
+     */
 
     private static final ConcurrentMap<String, ConcurrentMap<String, RpcStatus>> METHOD_STATISTICS = new ConcurrentHashMap<String, ConcurrentMap<String, RpcStatus>>();
     private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
+    /**
+     * 活跃状态
+     */
+
     private final AtomicInteger active = new AtomicInteger();
+    /**
+     * 总的数量
+     */
     private final AtomicLong total = new AtomicLong();
+    /**
+     * 失败的个数
+     */
+
     private final AtomicInteger failed = new AtomicInteger();
+    /**
+     * 总调用时长
+     */
+
     private final AtomicLong totalElapsed = new AtomicLong();
+    /**
+     * 总调用失败时长
+     */
+
     private final AtomicLong failedElapsed = new AtomicLong();
+    /**
+     * 最大调用时长
+     */
+
     private final AtomicLong maxElapsed = new AtomicLong();
+    /**
+     * 最大调用失败时长
+     */
+
     private final AtomicLong failedMaxElapsed = new AtomicLong();
+    /**
+     * 最大调用成功时长
+     */
+
     private final AtomicLong succeededMaxElapsed = new AtomicLong();
 
     private RpcStatus() {
@@ -93,6 +132,7 @@ public class RpcStatus {
 
     /**
      * @param url
+     * 该方法是增加计数
      */
     public static boolean beginCount(URL url, String methodName, int max) {
         max = (max <= 0) ? Integer.MAX_VALUE : max;
@@ -120,24 +160,36 @@ public class RpcStatus {
      * @param succeeded
      */
     public static void endCount(URL url, String methodName, long elapsed, boolean succeeded) {
+        // url对应的状态中计数器减一
         endCount(getStatus(url), elapsed, succeeded);
+        // 方法对应的状态中计数器减一
         endCount(getStatus(url, methodName), elapsed, succeeded);
     }
 
+//    该方法是计数器减少。
     private static void endCount(RpcStatus status, long elapsed, boolean succeeded) {
+        // 活跃计数器减一
         status.active.decrementAndGet();
+        // 总计数器加1
         status.total.incrementAndGet();
+        // 总调用时长加上调用时长
         status.totalElapsed.addAndGet(elapsed);
+        // 如果最大调用时长小于elapsed，则设置最大调用时长
         if (status.maxElapsed.get() < elapsed) {
             status.maxElapsed.set(elapsed);
         }
+        // 如果rpc调用成功
         if (succeeded) {
+            // 如果成最大调用成功时长小于elapsed，则设置最大调用成功时长
             if (status.succeededMaxElapsed.get() < elapsed) {
                 status.succeededMaxElapsed.set(elapsed);
             }
         } else {
+            // 失败计数器加一
             status.failed.incrementAndGet();
+            // 失败的过期数加上elapsed
             status.failedElapsed.addAndGet(elapsed);
+            // 总调用失败时长小于elapsed，则设置总调用失败时长
             if (status.failedMaxElapsed.get() < elapsed) {
                 status.failedMaxElapsed.set(elapsed);
             }

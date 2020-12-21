@@ -29,6 +29,8 @@ import static org.apache.dubbo.rpc.Constants.$ECHO;
 
 /**
  * Dubbo provided default Echo echo service, which is available for all dubbo provider service interface.
+ *
+ * 该过滤器是处理回声测试的方法。
  */
 @Activate(group = CommonConstants.PROVIDER, order = -110000)
 public class EchoFilter implements Filter {

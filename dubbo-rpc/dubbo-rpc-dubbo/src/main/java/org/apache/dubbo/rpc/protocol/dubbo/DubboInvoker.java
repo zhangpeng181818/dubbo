@@ -54,16 +54,31 @@ import static org.apache.dubbo.rpc.Constants.TOKEN_KEY;
 
 /**
  * DubboInvoker
+ * 该类是dubbo协议独自实现的的invoker，其中实现了调用方法的三种模式，分别是异步发送、单向发送和同步发送
  */
 public class DubboInvoker<T> extends AbstractInvoker<T> {
-
+    /**
+     * 信息交换客户端数组
+     */
     private final ExchangeClient[] clients;
+    /**
+     * 客户端数组位置
+     */
 
     private final AtomicPositiveInteger index = new AtomicPositiveInteger();
 
-    private final String version;
+    /**
+     * 版本号
+     */
 
+    private final String version;
+    /**
+     * 销毁锁
+     */
     private final ReentrantLock destroyLock = new ReentrantLock();
+    /**
+     * Invoker对象集合
+     */
 
     private final Set<Invoker<?>> invokers;
 

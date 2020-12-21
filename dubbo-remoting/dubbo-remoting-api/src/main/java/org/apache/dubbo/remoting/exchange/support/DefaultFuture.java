@@ -43,12 +43,21 @@ import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
 
 /**
  * DefaultFuture.
+ *
+ * 该类实现了ResponseFuture接口，其中封装了处理响应的逻辑。
+ * 你可以把DefaultFuture看成是一个中介，买房和卖房都通过这个中介进行沟通，
+ * 中介拥有着买房者的信息request和卖房者的信息response，并且促成他们之间的买卖。
  */
 public class DefaultFuture extends CompletableFuture<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultFuture.class);
-
+    /**
+     * 通道集合
+     */
     private static final Map<Long, Channel> CHANNELS = new ConcurrentHashMap<>();
+    /**
+     * Future集合，key为请求编号
+     */
 
     private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<>();
 
@@ -58,11 +67,31 @@ public class DefaultFuture extends CompletableFuture<Object> {
             TimeUnit.MILLISECONDS);
 
     // invoke id.
+    /**
+     * 请求编号
+     */
+
     private final Long id;
+    /**
+     * 通道
+     */
+
     private final Channel channel;
+    /**
+     * 请求
+     */
     private final Request request;
+    /**
+     * 超时
+     */
     private final int timeout;
+    /**
+     * 创建开始时间
+     */
     private final long start = System.currentTimeMillis();
+    /**
+     * 发送请求时间
+     */
     private volatile long sent;
     private Timeout timeoutCheckTask;
 
@@ -134,10 +163,11 @@ public class DefaultFuture extends CompletableFuture<Object> {
     /**
      * close a channel when a channel is inactive
      * directly return the unfinished requests.
-     *
+     *  该方法是关闭不活跃的通道，并且返回请求未完成。也就是关闭指定channel的请求，返回的是请求未完成。
      * @param channel channel to close
      */
     public static void closeChannel(Channel channel) {
+        // 遍历通道集合
         for (Map.Entry<Long, Channel> entry : CHANNELS.entrySet()) {
             if (channel.equals(entry.getValue())) {
                 DefaultFuture future = getFuture(entry.getKey());
@@ -146,13 +176,14 @@ public class DefaultFuture extends CompletableFuture<Object> {
                     if (futureExecutor != null && !futureExecutor.isTerminated()) {
                         futureExecutor.shutdownNow();
                     }
-
+                    // 创建一个关闭通道的响应
                     Response disconnectResponse = new Response(future.getId());
                     disconnectResponse.setStatus(Response.CHANNEL_INACTIVE);
                     disconnectResponse.setErrorMessage("Channel " +
                             channel +
                             " is inactive. Directly return the unFinished request : " +
                             future.getRequest());
+                    // 接收该关闭通道并且请求未完成的响应
                     DefaultFuture.received(channel, disconnectResponse);
                 }
             }
@@ -162,9 +193,11 @@ public class DefaultFuture extends CompletableFuture<Object> {
     public static void received(Channel channel, Response response) {
         received(channel, response, false);
     }
-
+//该方法是接收响应，也就是某个请求得到了响应，那么代表这次请求任务完成，所有需要把future从集合中移除。
+// 具体的接收响应结果在doReceived方法中实现。
     public static void received(Channel channel, Response response, boolean timeout) {
         try {
+            // future集合中移除该请求的future，（响应id和请求id一一对应的）
             DefaultFuture future = FUTURES.remove(response.getId());
             if (future != null) {
                 Timeout t = future.timeoutCheckTask;
@@ -172,6 +205,7 @@ public class DefaultFuture extends CompletableFuture<Object> {
                     // decrease Time
                     t.cancel();
                 }
+                // 接收响应结果
                 future.doReceived(response);
             } else {
                 logger.warn("The timeout response finally returned at "
@@ -181,16 +215,28 @@ public class DefaultFuture extends CompletableFuture<Object> {
                         + " -> " + channel.getRemoteAddress()) + ", please check provider side for detailed result.");
             }
         } finally {
+            // 通道集合移除该请求对应的通道，代表着这一次请求结束
             CHANNELS.remove(response.getId());
         }
     }
 
+    /**
+     * 该方法是取消一个请求，可以直接关闭一个请求，也就是值创建一个响应来回应该请求，把response值设置到该请求对于到future中，
+     * 做到了中断请求的作用。
+     * 该方法跟closeChannel的区别是closeChannel中对response的状态设置了CHANNEL_INACTIVE，
+     * 而cancel方法是中途被主动取消的，虽然有response值，但是并没有一个响应状态。
+     *
+     * @param mayInterruptIfRunning
+     * @return
+     */
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
+        // 创建一个取消请求的响应
         Response errorResult = new Response(id);
         errorResult.setStatus(Response.CLIENT_ERROR);
         errorResult.setErrorMessage("request future has been canceled.");
         this.doReceived(errorResult);
+        // 从集合中删除该请求
         FUTURES.remove(id);
         CHANNELS.remove(id);
         return true;
@@ -200,15 +246,25 @@ public class DefaultFuture extends CompletableFuture<Object> {
         this.cancel(true);
     }
 
+//    该方法是执行回调来处理响应结果。分为了三种情况：
+
+//    响应成功，那么执行完成后的逻辑。
+//    超时，会按照超时异常来处理
+//    其他，按照RuntimeException异常来处理
     private void doReceived(Response res) {
         if (res == null) {
             throw new IllegalStateException("response cannot be null");
         }
+
+        // 如果响应成功，返回码是20
         if (res.getStatus() == Response.OK) {
             this.complete(res.getResult());
+            //超时，回调处理成超时异常
         } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
+            // 回调处理异常
             this.completeExceptionally(new TimeoutException(res.getStatus() == Response.SERVER_TIMEOUT, channel, res.getErrorMessage()));
         } else {
+            // 其他情况处理成RemotingException异常
             this.completeExceptionally(new RemotingException(channel, res.getErrorMessage()));
         }
 

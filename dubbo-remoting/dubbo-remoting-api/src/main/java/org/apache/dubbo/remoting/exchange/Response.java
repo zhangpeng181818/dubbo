@@ -25,31 +25,37 @@ public class Response {
 
     /**
      * ok.
+     * 成功状态码
      */
     public static final byte OK = 20;
 
     /**
      * client side timeout.
+     * 客户端侧的超时状态码
      */
     public static final byte CLIENT_TIMEOUT = 30;
 
     /**
      * server side timeout.
+     * 服务端侧超时的状态码
      */
     public static final byte SERVER_TIMEOUT = 31;
 
     /**
      * channel inactive, directly return the unfinished requests.
+     * 通道不活跃，返回未完成请求的状态码
      */
     public static final byte CHANNEL_INACTIVE = 35;
 
     /**
      * request format error.
+     * 请求格式错误状态码
      */
     public static final byte BAD_REQUEST = 40;
 
     /**
      * response format error.
+     * 响应格式错误状态码
      */
     public static final byte BAD_RESPONSE = 50;
 
@@ -60,21 +66,25 @@ public class Response {
 
     /**
      * service error.
+     * 服务找不到状态码
      */
     public static final byte SERVICE_ERROR = 70;
 
     /**
      * internal server error.
+     * 内部服务器错误状态码
      */
     public static final byte SERVER_ERROR = 80;
 
     /**
      * internal server error.
+     * 客户端错误状态码
      */
     public static final byte CLIENT_ERROR = 90;
 
     /**
      * server side threadpool exhausted and quick return.
+     * 服务器端线程池耗尽并快速返回状态码
      */
     public static final byte SERVER_THREADPOOL_EXHAUSTED_ERROR = 100;
 

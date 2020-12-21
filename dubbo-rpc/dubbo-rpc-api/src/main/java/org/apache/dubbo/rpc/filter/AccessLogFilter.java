@@ -61,24 +61,45 @@ import static org.apache.dubbo.rpc.Constants.ACCESS_LOG_KEY;
  *    &lt;appender-ref ref="foo" /&gt;
  * &lt;/logger&gt;
  * </pre></code>
+ *
+ * 该过滤器是对记录日志的过滤器，它所做的工作就是把引用服务或者暴露服务的调用链信息写入到文件中。
+ * 日志消息先被放入日志集合，然后加入到日志队列，然后被放入到写入文件到任务中，最后进入文件。
  */
 @Activate(group = PROVIDER, value = ACCESS_LOG_KEY)
 public class AccessLogFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessLogFilter.class);
+    /**
+     * 日志访问名称，默认的日志访问名称
+     */
 
     private static final String LOG_KEY = "dubbo.accesslog";
+    /**
+     * 日志队列大小
+     */
 
     private static final int LOG_MAX_BUFFER = 5000;
+    /**
+     * 日志输出的频率
+     */
 
     private static final long LOG_OUTPUT_INTERVAL = 5000;
+    /**
+     * 日期格式
+     */
 
     private static final String FILE_DATE_FORMAT = "yyyyMMdd";
 
     // It's safe to declare it as singleton since it runs on single thread only
     private static final DateFormat FILE_NAME_FORMATTER = new SimpleDateFormat(FILE_DATE_FORMAT);
+    /**
+     * 日志队列 key为访问日志的名称，value为该日志名称对应的日志集合
+     */
 
     private static final Map<String, Set<AccessLogData>> LOG_ENTRIES = new ConcurrentHashMap<>();
+    /**
+     * 日志线程池
+     */
 
     private static final ScheduledExecutorService LOG_SCHEDULED = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("Dubbo-Access-Log", true));
 
@@ -92,7 +113,7 @@ public class AccessLogFilter implements Filter {
 
     /**
      * This method logs the access log for service method invocation call.
-     *
+     * 该方法是最重要的方法，从拼接了日志信息，把日志加入到集合，并且调用下一个调用链。
      * @param invoker service
      * @param inv     Invocation service method.
      * @return Result from service method.
@@ -109,9 +130,10 @@ public class AccessLogFilter implements Filter {
         } catch (Throwable t) {
             logger.warn("Exception in AccessLogFilter of service(" + invoker + " -> " + inv + ")", t);
         }
+        // 调用下一个调用链
         return invoker.invoke(inv);
     }
-
+//该方法是增加日志信息到日志集合中。
     private void log(String accessLog, AccessLogData accessLogData) {
         Set<AccessLogData> logSet = LOG_ENTRIES.computeIfAbsent(accessLog, k -> new ConcurrentHashSet<>());
 
@@ -155,6 +177,7 @@ public class AccessLogFilter implements Filter {
     }
 
     private void processWithAccessKeyLogger(Set<AccessLogData> logSet, File file) throws IOException {
+        // 把日志集合中的日志写入到文件
         try (FileWriter writer = new FileWriter(file, true)) {
             for (Iterator<AccessLogData> iterator = logSet.iterator();
                  iterator.hasNext();

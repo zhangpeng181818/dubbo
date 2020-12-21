@@ -24,13 +24,15 @@ public class UrlUtils {
     public static int getIdleTimeout(URL url) {
         int heartBeat = getHeartbeat(url);
         // idleTimeout should be at least more than twice heartBeat because possible retries of client.
+        // 获得心跳超时配置，默认是心跳周期的三倍
         int idleTimeout = url.getParameter(Constants.HEARTBEAT_TIMEOUT_KEY, heartBeat * 3);
+        // 如果心跳超时时间小于心跳周期的两倍，则抛出异常
         if (idleTimeout < heartBeat * 2) {
             throw new IllegalStateException("idleTimeout < heartbeatInterval * 2");
         }
         return idleTimeout;
     }
-
+    //获得心跳周期配置，
     public static int getHeartbeat(URL url) {
         return url.getParameter(Constants.HEARTBEAT_KEY, Constants.DEFAULT_HEARTBEAT);
     }

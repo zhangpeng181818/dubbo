@@ -22,13 +22,16 @@ import org.apache.dubbo.rpc.RpcException;
 
 /**
  * InvokerListenerAdapter
+ * 该类是服务引用监听器的适配类，没有做实际的操作
  */
 public abstract class InvokerListenerAdapter implements InvokerListener {
 
+//    引用服务
     @Override
     public void referred(Invoker<?> invoker) throws RpcException {
     }
 
+//    销毁
     @Override
     public void destroyed(Invoker<?> invoker) {
     }

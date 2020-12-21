@@ -46,18 +46,39 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This Invoker works on Consumer side.
+ *
+ * 该类是invoker的抽象方法，因为协议被夹在服务引用和服务暴露中间，
+ * 无论什么协议都有一些通用的Invoker和exporter的方法实现，
+ * 而该类就是实现了Invoker的公共方法，而把doInvoke抽象出来
+ * ，让子类只关注这个方法。
  */
 public abstract class AbstractInvoker<T> implements Invoker<T> {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
+    /**
+     * 服务类型
+     */
 
     private final Class<T> type;
+    /**
+     * url对象
+     */
 
     private final URL url;
+    /**
+     * 附加值
+     */
 
     private final Map<String, Object> attachment;
+    /**
+     * 是否可用
+     */
 
     private volatile boolean available = true;
+
+    /**
+     *  是否销毁
+     */
 
     private AtomicBoolean destroyed = new AtomicBoolean(false);
 
@@ -80,7 +101,7 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
         this.url = url;
         this.attachment = attachment == null ? null : Collections.unmodifiableMap(attachment);
     }
-
+//该方法是转化为附加值，把url中的值转化为服务调用invoker的附加值。
     private static Map<String, Object> convertAttachment(URL url, String[] keys) {
         if (ArrayUtils.isEmpty(keys)) {
             return null;
@@ -131,18 +152,24 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
         return getInterface() + " -> " + (getUrl() == null ? "" : getUrl().toString());
     }
 
+    //该方法做了一些公共的操作，比如服务引用销毁的检测，加入附加值，加入调用链实体域到会话域中等。
+    // 然后执行了doInvoke抽象方法。各协议自己去实现。
     @Override
     public Result invoke(Invocation inv) throws RpcException {
         // if invoker is destroyed due to address refresh from registry, let's allow the current invoke to proceed
+        // 如果服务引用销毁，则打印告警日志，但是通过
         if (destroyed.get()) {
             logger.warn("Invoker for service " + this + " on consumer " + NetUtils.getLocalHost() + " is destroyed, "
                     + ", dubbo version is " + Version.getVersion() + ", this invoker should not be used any longer");
         }
         RpcInvocation invocation = (RpcInvocation) inv;
+        // 会话域中加入该调用链
         invocation.setInvoker(this);
+        // 把附加值放入会话域
         if (CollectionUtils.isNotEmptyMap(attachment)) {
             invocation.addObjectAttachmentsIfAbsent(attachment);
         }
+        // 把上下文的附加值放入会话域
 
         Map<String, Object> contextAttachments = RpcContext.getContext().getObjectAttachments();
         if (CollectionUtils.isNotEmptyMap(contextAttachments)) {
@@ -156,10 +183,12 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
         }
 
         invocation.setInvokeMode(RpcUtils.getInvokeMode(url, invocation));
+        // 加入编号
         RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);
 
         AsyncRpcResult asyncResult;
         try {
+            // 执行调用链
             asyncResult = (AsyncRpcResult) doInvoke(invocation);
         } catch (InvocationTargetException e) { // biz exception
             Throwable te = e.getTargetException();

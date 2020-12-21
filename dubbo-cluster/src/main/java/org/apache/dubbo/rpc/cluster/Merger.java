@@ -18,9 +18,13 @@ package org.apache.dubbo.rpc.cluster;
 
 import org.apache.dubbo.common.extension.SPI;
 
+/**
+ * 该接口是分组聚合，将某对象数组合并为一个对象。
+ * @param <T>
+ */
 @SPI
 public interface Merger<T> {
-
+//    合并T数组，返回合并后的T对象
     T merge(T... items);
 
 }

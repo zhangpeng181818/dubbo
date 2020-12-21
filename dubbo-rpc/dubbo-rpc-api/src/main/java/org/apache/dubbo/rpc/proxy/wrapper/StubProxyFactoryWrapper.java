@@ -44,12 +44,21 @@ import static org.apache.dubbo.rpc.Constants.STUB_KEY;
 
 /**
  * StubProxyFactoryWrapper
+ *
+ * 该类实现了本地存根的逻辑
  */
 public class StubProxyFactoryWrapper implements ProxyFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StubProxyFactoryWrapper.class);
+    /**
+     * 代理工厂
+     */
 
     private final ProxyFactory proxyFactory;
+
+    /**
+     * 协议
+     */
 
     private Protocol protocol;
 
@@ -61,11 +70,16 @@ public class StubProxyFactoryWrapper implements ProxyFactory {
         this.protocol = protocol;
     }
 
+    //该类里面最重要的就是getProxy方法的实现，在该方法中先根据配置生成加载stub服务类，
+    // 然后通过构造方法将代理的对象进行包装，最后暴露该服务，然后返回代理类对象。
     @Override
     public <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException {
+        // 获得代理类对象
         T proxy = proxyFactory.getProxy(invoker, generic);
+        // 如果不是返回服务调用
         if (GenericService.class != invoker.getInterface()) {
             URL url = invoker.getUrl();
+            // 获得stub的配置
             String stub = url.getParameter(STUB_KEY, url.getParameter(LOCAL_KEY));
             if (ConfigUtils.isNotEmpty(stub)) {
                 Class<?> serviceType = invoker.getInterface();

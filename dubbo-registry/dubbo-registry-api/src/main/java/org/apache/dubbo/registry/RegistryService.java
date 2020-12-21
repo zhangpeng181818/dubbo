@@ -21,14 +21,17 @@ import org.apache.dubbo.common.URL;
 import java.util.List;
 
 /**
+ * 该接口是注册中心模块的服务接口，提供了注册、取消注册、订阅、取消订阅以及查询符合条件的已注册数据
  * RegistryService. (SPI, Prototype, ThreadSafe)
  *
  * @see org.apache.dubbo.registry.Registry
  * @see org.apache.dubbo.registry.RegistryFactory#getRegistry(URL)
+ *
  */
 public interface RegistryService {
 
     /**
+     * 注册，如果看懂我上面说的url的作用，那么就很清楚该方法的作用了，这里强调一点，就是注释中讲到的允许URI相同但参数不同的URL并存，不能覆盖，也就是说url值必须唯一的，不能有一模一样。
      * Register data, such as : provider service, consumer address, route rule, override rule and other data.
      * <p>
      * Registering is required to support the contract:<br>
@@ -43,6 +46,7 @@ public interface RegistryService {
     void register(URL url);
 
     /**
+     * 取消注册，该方法也很简单，就是取消注册，也就是商品生产者不在销售该商品， 需要把东西从自动售卖机上取下来，栏目也要取出，这里强调按全URL匹配取消注册。
      * Unregister
      * <p>
      * Unregistering is required to support the contract:<br>
@@ -54,6 +58,7 @@ public interface RegistryService {
     void unregister(URL url);
 
     /**
+     * 订阅，这里不是根据全URL匹配订阅的，而是根据条件去订阅，也就是说可以订阅多个服务。listener是用来监听处理注册数据变更的事件。
      * Subscribe to eligible registered data and automatically push when the registered data is changed.
      * <p>
      * Subscribing need to support contracts:<br>
@@ -71,6 +76,7 @@ public interface RegistryService {
     void subscribe(URL url, NotifyListener listener);
 
     /**
+     * 取消订阅，这是按照全URL匹配去取消订阅的。
      * Unsubscribe
      * <p>
      * Unsubscribing is required to support the contract:<br>
@@ -83,6 +89,7 @@ public interface RegistryService {
     void unsubscribe(URL url, NotifyListener listener);
 
     /**
+     * 查询注册列表，通过url进行条件查询所匹配的所有URL集合。
      * Query the registered data that matches the conditions. Corresponding to the push mode of the subscription, this is the pull mode and returns only one result.
      *
      * @param url Query condition, is not allowed to be empty, e.g. consumer://10.20.153.10/org.apache.dubbo.foo.BarService?version=1.0.0&application=kylin

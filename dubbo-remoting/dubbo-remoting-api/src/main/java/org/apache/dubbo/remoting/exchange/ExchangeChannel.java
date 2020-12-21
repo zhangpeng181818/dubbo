@@ -24,6 +24,10 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * ExchangeChannel. (API/SPI, Prototype, ThreadSafe)
+ *
+ * Exchange层，也就是信息交换层。
+ * 官方文档对这一层的解释是封装请求响应模式，同步转异步，
+ * 以 Request, Response为中心，扩展接口为 Exchanger, ExchangeChannel, ExchangeClient, ExchangeServer。
  */
 public interface ExchangeChannel extends Channel {
 
@@ -72,6 +76,7 @@ public interface ExchangeChannel extends Channel {
      *
      * @return message handler
      */
+//    getExchangeHandler方法就是返回一个信息交换处理器
     ExchangeHandler getExchangeHandler();
 
     /**

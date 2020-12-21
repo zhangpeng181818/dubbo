@@ -54,6 +54,7 @@ public class NettyClient extends AbstractClient {
     private static final Logger logger = LoggerFactory.getLogger(NettyClient.class);
     /**
      * netty client bootstrap
+     *  NioEventLoopGroup对象
      */
     private static final EventLoopGroup NIO_EVENT_LOOP_GROUP = eventLoopGroup(Constants.DEFAULT_IO_THREADS, "NettyClientWorker");
 
@@ -62,13 +63,16 @@ public class NettyClient extends AbstractClient {
     private static final String SOCKS_PROXY_PORT = "socksProxyPort";
 
     private static final String DEFAULT_SOCKS_PROXY_PORT = "1080";
-
+    /**
+     * 客户端引导类
+     */
     private Bootstrap bootstrap;
 
     /**
      * current channel. Each successful invocation of {@link NettyClient#doConnect()} will
      * replace this with new channel and close old channel.
      * <b>volatile, please copy reference to use.</b>
+     * 通道
      */
     private volatile Channel channel;
 
@@ -89,16 +93,20 @@ public class NettyClient extends AbstractClient {
      */
     @Override
     protected void doOpen() throws Throwable {
+        // 创建一个客户端的通道处理器
         final NettyClientHandler nettyClientHandler = new NettyClientHandler(getUrl(), this);
+        // 创建一个引导类
         bootstrap = new Bootstrap();
+        // 设置可选项
         bootstrap.group(NIO_EVENT_LOOP_GROUP)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 //.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, getTimeout())
                 .channel(socketChannelClass());
-
+        // 如果连接超时时间小于3s，则设置为3s，也就是说最低的超时时间为3s
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.max(3000, getConnectTimeout()));
+        // 创建一个客户端
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 
             @Override
@@ -108,7 +116,7 @@ public class NettyClient extends AbstractClient {
                 if (getUrl().getParameter(SSL_ENABLED_KEY, false)) {
                     ch.pipeline().addLast("negotiation", SslHandlerInitializer.sslClientHandler(getUrl(), nettyClientHandler));
                 }
-
+             // 编解码器
                 NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyClient.this);
                 ch.pipeline()//.addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
                         .addLast("decoder", adapter.getDecoder())

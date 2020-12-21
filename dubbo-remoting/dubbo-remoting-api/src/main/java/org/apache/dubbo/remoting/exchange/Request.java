@@ -24,23 +24,45 @@ import static org.apache.dubbo.common.constants.CommonConstants.HEARTBEAT_EVENT;
 
 /**
  * Request.
+ * 请求模型类
  */
 public class Request {
+    /**
+     * 请求编号自增序列
+     */
 
     private static final AtomicLong INVOKE_ID = new AtomicLong(0);
 
+    /**
+     * 请求编号
+     */
     private final long mId;
 
+    /**
+     * dubbo版本
+     */
     private String mVersion;
+    /**
+     * 是否需要响应
+     */
 
     private boolean mTwoWay = true;
+    /**
+     * 是否是事件
+     */
 
     private boolean mEvent = false;
+    /**
+     * 是否是异常的请求
+     */
 
     private boolean mBroken = false;
+    /**
+     * 请求数据
+     */
 
     private Object mData;
-
+//    请求编号使用INVOKE_ID生成，是JVM 进程内唯一的。
     public Request() {
         mId = newId();
     }

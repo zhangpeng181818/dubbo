@@ -42,18 +42,20 @@ import static org.apache.dubbo.registry.Constants.DEFAULT_REGISTRY_RETRY_PERIOD;
 import static org.apache.dubbo.registry.Constants.REGISTRY_RETRY_PERIOD_KEY;
 
 /**
+ * FailbackRegistry继承了AbstractRegistry，AbstractRegistry中的注册订阅等方法，实际上就是一些内存缓存的变化，
+ * 而真正的注册订阅的实现逻辑在FailbackRegistry实现，并且FailbackRegistry提供了失败重试的机制
  * FailbackRegistry. (SPI, Prototype, ThreadSafe)
  */
 public abstract class FailbackRegistry extends AbstractRegistry {
 
     /*  retry task map */
-
+// 注册失败的URL集合
     private final ConcurrentMap<URL, FailedRegisteredTask> failedRegistered = new ConcurrentHashMap<URL, FailedRegisteredTask>();
-
+    // 取消注册失败的URL集合
     private final ConcurrentMap<URL, FailedUnregisteredTask> failedUnregistered = new ConcurrentHashMap<URL, FailedUnregisteredTask>();
-
+    // 订阅失败的监听器集合
     private final ConcurrentMap<Holder, FailedSubscribedTask> failedSubscribed = new ConcurrentHashMap<Holder, FailedSubscribedTask>();
-
+    // 取消订阅失败的监听器集合
     private final ConcurrentMap<Holder, FailedUnsubscribedTask> failedUnsubscribed = new ConcurrentHashMap<Holder, FailedUnsubscribedTask>();
 
     /**
@@ -67,7 +69,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     public FailbackRegistry(URL url) {
         super(url);
         this.retryPeriod = url.getParameter(REGISTRY_RETRY_PERIOD_KEY, DEFAULT_REGISTRY_RETRY_PERIOD);
-
+//        构造函数主要是创建了失败重试的定时器，重试频率从URL取，如果没有设置，则默认为5000ms。
         // since the retry task will not be very much. 128 ticks is enough.
         retryTimer = new HashedWheelTimer(new NamedThreadFactory("DubboRegistryRetryTimer", true), retryPeriod, TimeUnit.MILLISECONDS, 128);
     }
@@ -191,7 +193,14 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         return failedUnsubscribed;
     }
 
-
+    /**
+     * 可以看到，逻辑很清晰，就是做了一个doRegister的操作，如果失败抛出异常，则加入到失败的缓存中进行重试。为这里要解释的是doRegister，与之对应的还有doUnregister、doSubscribe、doUnsubscribe三个方法，是FailbackRegistry抽象出来的方法，
+     * 意图在于每种实现注册中心的方法不一样，相对应的注册、订阅等操作也会有所区别，
+     * 而把这四个方法抽象出现，为了让子类只去关注这四个的实现，
+     * 比如说redis实现的注册中心跟zookeeper实现的注册中心方式肯定不一样，那么对应的注册订阅等操作也有所不同，
+     * 那么各自只要去实现该抽象方法即可。
+     * @param url
+     */
     @Override
     public void register(URL url) {
         if (!acceptable(url)) {

@@ -20,14 +20,14 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Generic service interface
- *
+ *  该接口是通用的服务接口，同样定义了一个类似invoke的方法
  * @export
  */
 public interface GenericService {
 
     /**
      * Generic invocation
-     *
+     *  通用的会话域
      * @param method         Method name, e.g. findPerson. If there are overridden methods, parameter info is
      *                       required, e.g. findPerson(java.lang.String)
      * @param parameterTypes Parameter types

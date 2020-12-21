@@ -45,10 +45,17 @@ import static org.apache.dubbo.common.constants.CommonConstants.ANYHOST_VALUE;
 
 /**
  * AbstractProxyProtocol
+ *
+ * 该类继承了AbstractProtocol类，其中利用了代理工厂对AbstractProtocol中的两个集合进行了填充，并且对异常做了处理。
  */
 public abstract class AbstractProxyProtocol extends AbstractProtocol {
-
+    /**
+     * rpc的异常类集合
+     */
     private final List<Class<?>> rpcExceptions = new CopyOnWriteArrayList<Class<?>>();
+    /**
+     * 代理工厂
+     */
 
     protected ProxyFactory proxyFactory;
 
@@ -73,10 +80,13 @@ public abstract class AbstractProxyProtocol extends AbstractProtocol {
         this.proxyFactory = proxyFactory;
     }
 
+    //其中分为两个步骤，创建一个exporter，放入到集合汇中。在创建exporter时对unexport方法进行了重写。
     @Override
     @SuppressWarnings("unchecked")
     public <T> Exporter<T> export(final Invoker<T> invoker) throws RpcException {
+        // 获得uri
         final String uri = serviceKey(invoker.getUrl());
+        // 获得服务暴露者
         Exporter<T> exporter = (Exporter<T>) exporterMap.get(uri);
         if (exporter != null) {
             // When modifying the configuration through override, you need to re-expose the newly modified service.
@@ -84,11 +94,15 @@ public abstract class AbstractProxyProtocol extends AbstractProtocol {
                 return exporter;
             }
         }
+        // 新建一个线程
         final Runnable runnable = doExport(proxyFactory.getProxy(invoker, true), invoker.getInterface(), invoker.getUrl());
         exporter = new AbstractExporter<T>(invoker) {
             @Override
             public void unexport() {
                 super.unexport();
+                /**
+                 * 取消暴露
+                 */
                 exporterMap.remove(uri);
                 if (runnable != null) {
                     try {
@@ -103,13 +117,16 @@ public abstract class AbstractProxyProtocol extends AbstractProtocol {
         return exporter;
     }
 
+    //该方法是服务引用，先从代理工厂中获得Invoker对象target，然后创建了真实的invoker在重写方法中调用代理的方法，最后加入到集合。
     @Override
     protected <T> Invoker<T> protocolBindingRefer(final Class<T> type, final URL url) throws RpcException {
+        // 通过代理获得实体域
         final Invoker<T> target = proxyFactory.getInvoker(doRefer(type, url), type, url);
         Invoker<T> invoker = new AbstractInvoker<T>(type, url) {
             @Override
             protected Result doInvoke(Invocation invocation) throws Throwable {
                 try {
+                    // 获得调用结果
                     Result result = target.invoke(invocation);
                     // FIXME result is an AsyncRpcResult instance.
                     Throwable e = result.getException();
@@ -153,6 +170,9 @@ public abstract class AbstractProxyProtocol extends AbstractProtocol {
     protected int getErrorCode(Throwable e) {
         return RpcException.UNKNOWN_EXCEPTION;
     }
+
+
+//可以看到其中抽象了服务引用和暴露的方法，让各类协议各自实现。
 
     protected abstract <T> Runnable doExport(T impl, Class<T> type, URL url) throws RpcException;
 

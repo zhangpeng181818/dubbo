@@ -18,8 +18,16 @@ package org.apache.dubbo.remoting.buffer;
 
 import java.nio.ByteBuffer;
 
+/**
+ *
+ * 该接口是通道缓冲区工厂，其中就只定义了获得通道缓冲区的方法
+ */
 public interface ChannelBufferFactory {
-
+    /**
+     * 获得缓冲区实例
+     * @param capacity
+     * @return
+     */
     ChannelBuffer getBuffer(int capacity);
 
     ChannelBuffer getBuffer(byte[] array, int offset, int length);

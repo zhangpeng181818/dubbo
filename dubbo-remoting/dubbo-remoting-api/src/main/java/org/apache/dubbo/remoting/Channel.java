@@ -24,6 +24,13 @@ import java.net.InetSocketAddress;
  * @see org.apache.dubbo.remoting.Client
  * @see RemotingServer#getChannels()
  * @see RemotingServer#getChannel(InetSocketAddress)
+ *
+ * 该接口是通道接口，通道是通讯的载体。
+ * 还是用自动贩卖机的例子，自动贩卖机就好比是一个通道，消息发送端会往通道输入消息，
+ * 而接收端会从通道读消息。并且接收端发现通道没有消息，就去做其他事情了，不会造成阻塞。
+ * 所以channel可以读也可以写，并且可以异步读写。channel是client和server的传输桥梁。
+ * channel和client是一一对应的，也就是一个client对应一个channel，
+ * 但是channel和server是多对一对关系，也就是一个server可以对应多个channel。
  */
 public interface Channel extends Endpoint {
 
@@ -32,6 +39,7 @@ public interface Channel extends Endpoint {
      *
      * @return remote address.
      */
+    // 获得远程地址
     InetSocketAddress getRemoteAddress();
 
     /**
@@ -39,6 +47,8 @@ public interface Channel extends Endpoint {
      *
      * @return connected
      */
+
+    // 判断通道是否连接
     boolean isConnected();
 
     /**
@@ -47,6 +57,7 @@ public interface Channel extends Endpoint {
      * @param key key.
      * @return has or has not.
      */
+    // 判断是否有该key的值
     boolean hasAttribute(String key);
 
     /**
@@ -55,6 +66,7 @@ public interface Channel extends Endpoint {
      * @param key key.
      * @return value.
      */
+    // 获得该key对应的值
     Object getAttribute(String key);
 
     /**
@@ -63,6 +75,8 @@ public interface Channel extends Endpoint {
      * @param key   key.
      * @param value value.
      */
+
+    // 添加属性
     void setAttribute(String key, Object value);
 
     /**
@@ -70,5 +84,12 @@ public interface Channel extends Endpoint {
      *
      * @param key key.
      */
+    ;
+
+    // 移除属性
     void removeAttribute(String key);
+
+    /**
+     * 可以看到Channel继承了Endpoint，也就是端抽象出来的方法也同样是channel所需要的
+     */
 }

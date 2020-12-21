@@ -20,6 +20,7 @@ import org.apache.dubbo.common.Node;
 import org.apache.dubbo.common.URL;
 
 /**
+ * 注册中心接口，该接口很好理解，就是把节点以及注册中心服务的方法整合在了这个接口里面。我们来看看源代码：
  * Registry. (SPI, Prototype, ThreadSafe)
  *
  * @see org.apache.dubbo.registry.RegistryFactory#getRegistry(URL)

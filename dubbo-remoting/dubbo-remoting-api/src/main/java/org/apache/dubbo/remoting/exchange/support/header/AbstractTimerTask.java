@@ -30,6 +30,9 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractTimerTask implements TimerTask {
 
+    /**
+     * 通道管理
+     */
     private final ChannelProvider channelProvider;
 
     private final Long tick;
@@ -43,7 +46,7 @@ public abstract class AbstractTimerTask implements TimerTask {
         this.tick = tick;
         this.channelProvider = channelProvider;
     }
-
+    // 最后一次接收到消息的时间戳
     static Long lastRead(Channel channel) {
         return (Long) channel.getAttribute(HeartbeatHandler.KEY_READ_TIMESTAMP);
     }
@@ -60,6 +63,7 @@ public abstract class AbstractTimerTask implements TimerTask {
         this.cancel = true;
     }
 
+    //???
     private void reput(Timeout timeout, Long tick) {
         if (timeout == null || tick == null) {
             throw new IllegalArgumentException();
@@ -80,7 +84,9 @@ public abstract class AbstractTimerTask implements TimerTask {
     @Override
     public void run(Timeout timeout) throws Exception {
         Collection<Channel> c = channelProvider.getChannels();
+        // 遍历所有通道
         for (Channel channel : c) {
+            // 如果通道关闭了，则跳过
             if (channel.isClosed()) {
                 continue;
             }
@@ -91,6 +97,8 @@ public abstract class AbstractTimerTask implements TimerTask {
 
     protected abstract void doTask(Channel channel);
 
+    // 获得所有的通道集合，需要心跳的通道数组
+//    该接口就定义了一个方法，获得需要心跳的通道集合。可想而知，会对集合内的通道都做心跳检测。
     interface ChannelProvider {
         Collection<Channel> getChannels();
     }

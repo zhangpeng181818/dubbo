@@ -33,7 +33,7 @@ import static org.apache.dubbo.rpc.Constants.TOKEN_KEY;
 /**
  * Perform check whether given provider token is matching with remote token or not. If it does not match
  * it will not allow to invoke remote method.
- *
+ *  该过滤器提供了token的验证功能
  * @see Filter
  */
 @Activate(group = CommonConstants.PROVIDER, value = TOKEN_KEY)

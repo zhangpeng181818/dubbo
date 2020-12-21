@@ -33,6 +33,16 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 
 import java.util.concurrent.ThreadFactory;
 
+/**
+ *
+ * https://segmentfault.com/a/1190000021054503?utm_source=tag-newest
+ *
+ * https://blog.csdn.net/xing317521/article/details/105054661/
+ *
+ *Linux有select、poll和epoll三个解决方案来实现多路复用，其中的select和poll，有点类似于上面的NIOServerDemo程序，他会把所有的文件描述符记录在一个数组中，通过在系统内核中遍历来筛选出有数据过来的Socket，只不过是从应用程序中遍历改成了在内核中遍历，本质还是一样的。
+ *
+ * Epoll则使用了事件机制，在复用器中注册了一个回调事件，当Socket中有数据过来的时候调用，通知用户处理信息，这样就不需要对全部的文件描述符进行轮训了，这就是Epoll对NIO进行的改进。
+ */
 public class NettyEventLoopFactory {
     public static EventLoopGroup eventLoopGroup(int threads, String threadFactoryName) {
         ThreadFactory threadFactory = new DefaultThreadFactory(threadFactoryName, true);

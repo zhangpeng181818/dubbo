@@ -50,25 +50,36 @@ import static org.apache.dubbo.common.constants.CommonConstants.SSL_ENABLED_KEY;
 
 /**
  * NettyServer.
+ * 该类继承了AbstractServer，实现了Server。是基于netty4实现的服务器类
  */
 public class NettyServer extends AbstractServer implements RemotingServer {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyServer.class);
     /**
      * the cache for alive worker channel.
+     * 连接该服务器的通道集合 key为ip:port
      * <ip:port, dubbo channel>
      */
     private Map<String, Channel> channels;
     /**
      * netty server bootstrap.
+     * 服务器引导类
      */
     private ServerBootstrap bootstrap;
     /**
      * the boss channel that receive connections and dispatch these to worker channel.
+     * 通道
      */
 	private io.netty.channel.Channel channel;
 
+    /**
+     * boss线程组
+     */
     private EventLoopGroup bossGroup;
+    /**
+     * worker线程组
+     */
+
     private EventLoopGroup workerGroup;
 
     public NettyServer(URL url, ChannelHandler handler) throws RemotingException {
@@ -84,16 +95,19 @@ public class NettyServer extends AbstractServer implements RemotingServer {
      */
     @Override
     protected void doOpen() throws Throwable {
+        // 创建服务引导类
         bootstrap = new ServerBootstrap();
-
+// 创建boss线程组
         bossGroup = NettyEventLoopFactory.eventLoopGroup(1, "NettyServerBoss");
+        // 创建worker线程组
         workerGroup = NettyEventLoopFactory.eventLoopGroup(
                 getUrl().getPositiveParameter(IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS),
                 "NettyServerWorker");
-
+        // 创建服务器处理器
         final NettyServerHandler nettyServerHandler = new NettyServerHandler(getUrl(), this);
+        // 获得通道集合
         channels = nettyServerHandler.getChannels();
-
+        // 设置ventLoopGroup还有可选项
         bootstrap.group(bossGroup, workerGroup)
                 .channel(NettyEventLoopFactory.serverSocketChannelClass())
                 .option(ChannelOption.SO_REUSEADDR, Boolean.TRUE)
@@ -104,6 +118,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
                     protected void initChannel(SocketChannel ch) throws Exception {
                         // FIXME: should we use getTimeout()?
                         int idleTimeout = UrlUtils.getIdleTimeout(getUrl());
+                        // 编解码器
                         NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyServer.this);
                         if (getUrl().getParameter(SSL_ENABLED_KEY, false)) {
                             ch.pipeline().addLast("negotiation",
@@ -117,8 +132,11 @@ public class NettyServer extends AbstractServer implements RemotingServer {
                     }
                 });
         // bind
+        // bind 绑定
         ChannelFuture channelFuture = bootstrap.bind(getBindAddress());
+        // 等待绑定完成
         channelFuture.syncUninterruptibly();
+        // 设置通道
         channel = channelFuture.channel();
 
     }

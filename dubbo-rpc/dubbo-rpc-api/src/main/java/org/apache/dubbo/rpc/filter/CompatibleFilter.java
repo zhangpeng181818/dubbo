@@ -44,6 +44,8 @@ import static org.apache.dubbo.remoting.Constants.SERIALIZATION_KEY;
  *
  * @see Filter
  *
+ * 该过滤器是做兼容性的过滤器。
+ *
  */
 public class CompatibleFilter implements Filter, Filter.Listener {
 

@@ -31,6 +31,24 @@ import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SPLIT_PATT
 
 /**
  * ConsistentHashLoadBalance
+ *
+ * 该类是负载均衡基于 hash 一致性的逻辑实现。
+ * 一致性哈希算法由麻省理工学院的 Karger 及其合作者于1997年提供出的，一开始被大量运用于缓存系统的负载均衡。
+ * 它的工作原理是这样的：首先根据 ip 或其他的信息为缓存节点生成一个 hash，在dubbo中使用参数进行计算hash。
+ * 并将这个 hash 投射到 [0, 232 - 1] 的圆环上，当有查询或写入请求时，则生成一个 hash 值。
+ * 然后查找第一个大于或等于该 hash 值的缓存节点，并到这个节点中查询或写入缓存项。
+ * 如果当前节点挂了，则在下一次查询或写入缓存时，为缓存项查找另一个大于其 hash 值的缓存节点即可。
+ * 大致效果如下图所示（引用一下官网的图）
+ *
+ * 每个缓存节点在圆环上占据一个位置。
+ * 如果缓存项的 key 的 hash 值小于缓存节点 hash 值，则到该缓存节点中存储或读取缓存项，
+ * 这里有两个概念不要弄混，缓存节点就好比dubbo中的服务提供者，会有很多的服务提供者，
+ * 而缓存项就好比是服务引用的消费者。
+ * 比如下面绿色点对应的缓存项也就是服务消费者将会被存储到 cache-2 节点中。
+ * 由于 cache-3 挂了，原本应该存到该节点中的缓存项也就是服务消费者最终会存储到 cache-4 节点中，
+ * 也就是调用cache-4 这个服务提供者。
+ *
+ * https://segmentfault.com/a/1190000018105767
  */
 public class ConsistentHashLoadBalance extends AbstractLoadBalance {
     public static final String NAME = "consistenthash";
@@ -50,11 +68,16 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
     @SuppressWarnings("unchecked")
     @Override
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
+        // 获得方法名
         String methodName = RpcUtils.getMethodName(invocation);
+        // 获得key
         String key = invokers.get(0).getUrl().getServiceKey() + "." + methodName;
         // using the hashcode of list to compute the hash only pay attention to the elements in the list
+        // 获取 invokers 原始的 hashcode
         int invokersHashCode = invokers.hashCode();
+        // 从一致性 hash 选择器集合中获得一致性 hash 选择器
         ConsistentHashSelector<T> selector = (ConsistentHashSelector<T>) selectors.get(key);
+        // 如果等于空或者选择器的hash值不等于原始的值，则新建一个一致性 hash 选择器，并且加入到集合
         if (selector == null || selector.identityHashCode != invokersHashCode) {
             selectors.put(key, new ConsistentHashSelector<T>(invokers, methodName, invokersHashCode));
             selector = (ConsistentHashSelector<T>) selectors.get(key);
@@ -117,7 +140,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             }
             return entry.getValue();
         }
-
+//计算hash值
         private long hash(byte[] digest, int number) {
             return (((long) (digest[3 + number * 4] & 0xFF) << 24)
                     | ((long) (digest[2 + number * 4] & 0xFF) << 16)

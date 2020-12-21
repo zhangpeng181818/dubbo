@@ -29,6 +29,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Round robin load balance.
+ *
+ * 该类是负载均衡基于加权轮询算法的实现。那么什么是加权轮询，轮询很好理解，
+ * 比如我第一个请求分配给A服务器，第二个请求分配给B服务器，第三个请求分配给C服务器，第四个请求又分配给A服务器，这就是轮询，
+ * 但是这只适合每台服务器性能相近的情况，这种是一种非常理想的情况，那更多的是每台服务器的性能都会有所差异，
+ * 这个时候性能差的服务器被分到等额的请求，就会需要承受压力大宕机的情况，
+ * 这个时候我们需要对轮询加权，我举个例子，服务器 A、B、C 权重比为 6:3:1，
+ * 那么在10次请求中，服务器 A 将收到其中的6次请求，服务器 B 会收到其中的3次请求，
+ * 服务器 C 则收到其中的1次请求，也就是说每台服务器能够收到的请求归结于它的权重。
  */
 public class RoundRobinLoadBalance extends AbstractLoadBalance {
     public static final String NAME = "roundrobin";

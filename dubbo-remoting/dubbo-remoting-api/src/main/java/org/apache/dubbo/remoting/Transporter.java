@@ -27,6 +27,13 @@ import org.apache.dubbo.common.extension.SPI;
  * <a href="http://en.wikipedia.org/wiki/Client%E2%80%93server_model">Client/Server</a>
  *
  * @see org.apache.dubbo.remoting.Transporters
+ *
+ * 该接口是网络传输接口，有以下几个注意点：
+ *
+ * 该接口是一个可扩展的接口，并且默认实现NettyTransporter。
+ * 用了dubbo SPI扩展机制中的Adaptive注解，
+ * 加载对应的bind方法，使用url携带的server或者transporter属性值，
+ * 加载对应的connect方法，使用url携带的client或者transporter属性值，
  */
 @SPI("netty")
 public interface Transporter {
@@ -40,6 +47,8 @@ public interface Transporter {
      * @throws RemotingException
      * @see org.apache.dubbo.remoting.Transporters#bind(URL, ChannelHandler...)
      */
+
+    // 绑定一个服务器
     @Adaptive({Constants.SERVER_KEY, Constants.TRANSPORTER_KEY})
     RemotingServer bind(URL url, ChannelHandler handler) throws RemotingException;
 
@@ -52,6 +61,7 @@ public interface Transporter {
      * @throws RemotingException
      * @see org.apache.dubbo.remoting.Transporters#connect(URL, ChannelHandler...)
      */
+    // 连接一个服务器，即创建一个客户端
     @Adaptive({Constants.CLIENT_KEY, Constants.TRANSPORTER_KEY})
     Client connect(URL url, ChannelHandler handler) throws RemotingException;
 

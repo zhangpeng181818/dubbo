@@ -30,6 +30,8 @@ import java.util.List;
  *
  * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
  * @see org.apache.dubbo.rpc.cluster.Directory#list(Invocation)
+ *
+ * 该接口是路由规则的接口，定义的两个方法，第一个方法是获得路由规则的url，第二个方法是筛选出跟规则匹配的Invoker集合。
  */
 public interface Router extends Comparable<Router> {
 
@@ -37,14 +39,14 @@ public interface Router extends Comparable<Router> {
 
     /**
      * Get the router url.
-     *
+     * 获得路由规则的url
      * @return url
      */
     URL getUrl();
 
     /**
      * Filter invokers with current routing rule and only return the invokers that comply with the rule.
-     *
+     * 筛选出跟规则匹配的Invoker集合
      * @param invokers   invoker list
      * @param url        refer url
      * @param invocation invocation

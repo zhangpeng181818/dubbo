@@ -44,6 +44,8 @@ import static org.apache.dubbo.rpc.cluster.Constants.OVERRIDE_PROVIDERS_KEY;
 
 /**
  * AbstractOverrideConfigurator
+ *
+ * 该类实现了Configurator接口，是配置规则 抽象类，配置有两种方式，一种是没有时添加配置，这种暂时没有用到，另一种是覆盖配置。
  */
 public abstract class AbstractConfigurator implements Configurator {
 

@@ -21,6 +21,7 @@ import org.apache.dubbo.common.extension.Adaptive;
 import org.apache.dubbo.common.extension.SPI;
 
 /**
+ * 这个接口是注册中心的工厂接口，用来返回注册中心的对象
  * RegistryFactory. (SPI, Singleton, ThreadSafe)
  *
  * @see org.apache.dubbo.registry.support.AbstractRegistryFactory
@@ -42,6 +43,8 @@ public interface RegistryFactory {
      * @param url Registry address, is not allowed to be empty
      * @return Registry reference, never return empty value
      */
+    //在getRegistry方法上可以看到有@Adaptive注解，那么该接口会动态生成一个适配器RegistryFactory$Adaptive,
+    //并且会去首先扩展url.protocol的值对应的实现类
     @Adaptive({"protocol"})
     Registry getRegistry(URL url);
 

@@ -26,6 +26,7 @@ import static org.apache.dubbo.rpc.Constants.DEPRECATED_KEY;
 
 /**
  * DeprecatedProtocolFilter
+ * 该类是当调用废弃的服务时候打印错误日志。
  */
 @Activate(DEPRECATED_KEY)
 public class DeprecatedInvokerListener extends InvokerListenerAdapter {
@@ -35,6 +36,7 @@ public class DeprecatedInvokerListener extends InvokerListenerAdapter {
     @Override
     public void referred(Invoker<?> invoker) throws RpcException {
         if (invoker.getUrl().getParameter(DEPRECATED_KEY, false)) {
+            // 当该引用的服务被废弃时，打印错误日志
             LOGGER.error("The service " + invoker.getInterface().getName() + " is DEPRECATED! Declare from " + invoker.getUrl());
         }
     }

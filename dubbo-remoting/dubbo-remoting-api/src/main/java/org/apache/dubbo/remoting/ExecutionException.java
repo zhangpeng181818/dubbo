@@ -22,6 +22,8 @@ import java.net.InetSocketAddress;
  * ReceiveException
  *
  * @export
+ *
+ * 远程通信的执行异常。
  */
 public class ExecutionException extends RemotingException {
 

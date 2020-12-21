@@ -35,18 +35,25 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * NettyServerHandler.
+ *
+ * 该类继承了ChannelDuplexHandler，是基于netty4实现的服务端通道处理实现类
  */
 @io.netty.channel.ChannelHandler.Sharable
 public class NettyServerHandler extends ChannelDuplexHandler {
     private static final Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
     /**
      * the cache for alive worker channel.
+     * 连接该服务器的通道数 key为ip:port
      * <ip:port, dubbo channel>
      */
     private final Map<String, Channel> channels = new ConcurrentHashMap<String, Channel>();
-
+    /**
+     * url对象
+     */
     private final URL url;
-
+    /**
+     * 通道处理器
+     */
     private final ChannelHandler handler;
 
     public NettyServerHandler(URL url, ChannelHandler handler) {
@@ -66,10 +73,13 @@ public class NettyServerHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        // 获得通道
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
+        // 如果通道不为空，则加入集合中
         if (channel != null) {
             channels.put(NetUtils.toAddressString((InetSocketAddress) ctx.channel().remoteAddress()), channel);
         }
+        // 连接该通道
         handler.connected(channel);
 
         if (logger.isInfoEnabled()) {

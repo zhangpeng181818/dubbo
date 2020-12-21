@@ -23,6 +23,8 @@ import java.net.InetSocketAddress;
  *
  * @export
  * @see org.apache.dubbo.remoting.exchange.support.DefaultFuture#get()
+ *
+ * TimeoutException是超时异常。
  */
 public class TimeoutException extends RemotingException {
 

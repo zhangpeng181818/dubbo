@@ -199,7 +199,12 @@ import java.nio.ByteBuffer;
  * Please refer to {@link ChannelBufferInputStream} and {@link
  * ChannelBufferOutputStream}.
  *
+ *  缓存区在NIO框架中非常重要，它作为字节容器，每个NIO框架都有自己的相应的设计实现。
+ *  比如Java NIO有ByteBuffer的设计，Mina有IoBuffer的设计，Netty4有ByteBuf的设计。
+ *  那么在本文讲到的内容是dubbo对于缓冲区做的一些接口定义，并且做了不同的框架实现缓冲区公共的逻辑。
  *
+ *  该接口继承了Comparable接口，该接口是通道缓存接口，是字节容器，
+ *  在netty中也有通道缓存的设计，也就是io.netty.buffer.ByteBuf，该接口的方法定义和设计跟ByteBuf几乎一样，连注释都一样，
  */
 public interface ChannelBuffer extends Comparable<ChannelBuffer> {
 

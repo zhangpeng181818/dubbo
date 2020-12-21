@@ -43,6 +43,9 @@ import java.util.function.Function;
  * @serial Don't change the class name and package name.
  * @see org.apache.dubbo.rpc.Invoker#invoke(Invocation)
  * @see AppResponse
+ *
+ *
+ * 该接口是实体域执行invoke的结果接口，里面定义了获得结果异常以及附加值等方法
  */
 public interface Result extends Serializable {
 
