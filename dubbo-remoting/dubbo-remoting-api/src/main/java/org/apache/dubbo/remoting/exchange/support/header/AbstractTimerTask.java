@@ -63,7 +63,7 @@ public abstract class AbstractTimerTask implements TimerTask {
         this.cancel = true;
     }
 
-    //???
+    //重新将定时任务放入
     private void reput(Timeout timeout, Long tick) {
         if (timeout == null || tick == null) {
             throw new IllegalArgumentException();

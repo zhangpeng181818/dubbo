@@ -299,7 +299,9 @@ public class DubboProtocol extends AbstractProtocol {
 
             }
         }
-
+        //最终open的是一个netty服务器。
+        //我们要暴露服务，创建服务器，其实就是启动netty服务器，监听20880端口。
+        //放行，dubbo暴露出来，相当于netty服务器在底层启动，20880端口进行监听。
         openServer(url);
         optimizeSerialization(url);
 

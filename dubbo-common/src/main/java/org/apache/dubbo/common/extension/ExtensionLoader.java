@@ -85,13 +85,18 @@ public class ExtensionLoader<T> {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
 
+    //    扩展加载器集合，key为扩展接口，例如Protocol等：
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<>(64);
 
+    //    扩展实现类集合，key为扩展实现类，value为扩展对象，例如key为Class<DubboProtocol>，value为DubboProtocol对象
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_INSTANCES = new ConcurrentHashMap<>(64);
 
     private final Class<?> type;
-
+//为dubbo的IOC提供所有对象
     private final ExtensionFactory objectFactory;
+    /**
+     * 以下属性都是cache开头的，都是出于性能和资源的优化，才做的缓存，读取扩展配置后，会先进行缓存，等到真正需要用到某个实现时，再对该实现类的对象进行初始化，然后对该对象也进行缓存。
+     */
 
     ////缓存的扩展名与拓展类映射，和cachedClasses的key和value对换
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<>();
@@ -110,7 +115,7 @@ public class ExtensionLoader<T> {
     private String cachedDefaultName;
     //创建cachedAdaptiveInstance异常
     private volatile Throwable createAdaptiveInstanceError;
-//拓展Wrapper实现类集合
+    //拓展Wrapper实现类集合
     private Set<Class<?>> cachedWrapperClasses;
     //拓展名与加载对应拓展类发生的异常的映射
     private Map<String, IllegalStateException> exceptions = new ConcurrentHashMap<>();
@@ -149,7 +154,9 @@ public class ExtensionLoader<T> {
 
     private ExtensionLoader(Class<?> type) {
         this.type = type;
-        objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
+        objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class)
+                .getAdaptiveExtension());
+        //获取一个扩展类，如果@Adaptive注解在类上就是一个装饰类，如果注解在方法上就是一个动态代理类，例如Protocol$Adaptive
     }
 
     private static <T> boolean withExtensionAnnotation(Class<T> type) {
@@ -268,6 +275,8 @@ public class ExtensionLoader<T> {
      * @param group  group
      * @return extension list which are activated
      * @see org.apache.dubbo.common.extension.Activate
+     * <p>
+     * 获得符合自动激活条件的扩展实现类对象集合
      */
     public List<T> getActivateExtension(URL url, String[] values, String group) {
         List<T> activateExtensions = new ArrayList<>();
@@ -662,6 +671,7 @@ public class ExtensionLoader<T> {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
+            //IOC
             injectExtension(instance);
 
 
@@ -678,8 +688,11 @@ public class ExtensionLoader<T> {
                     for (Class<?> wrapperClass : wrapperClassesList) {
                         Wrapper wrapper = wrapperClass.getAnnotation(Wrapper.class);
                         if (wrapper == null
-                                || (ArrayUtils.contains(wrapper.matches(), name) && !ArrayUtils.contains(wrapper.mismatches(), name))) {
-                            instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
+                                || (ArrayUtils.contains(wrapper.matches(), name) &&
+                                !ArrayUtils.contains(wrapper.mismatches(), name))) {
+                            instance = injectExtension(
+                                    (T) wrapperClass.getConstructor(type).newInstance(instance)//AOP
+                            );
                         }
                     }
                 }
@@ -697,6 +710,12 @@ public class ExtensionLoader<T> {
         return getExtensionClasses().containsKey(name);
     }
 
+    //Dubbo IOC 是通过 setter 方法注入依赖。
+// Dubbo 首先会通过反射获取到实例的所有方法，然后再遍历方法列表，检测方法名是否具有 setter 方法特征。
+// 若有，则通过 ObjectFactory 获取依赖对象，最后通过反射调用 setter 方法将依赖设置到目标对象中。
+    //objectFactory 变量的类型为 AdaptiveExtensionFactory，AdaptiveExtensionFactory 内部维护了一个 ExtensionFactory 列表，
+// 用于存储其他类型的 ExtensionFactory。Dubbo 目前提供了两种 ExtensionFactory，分别是 SpiExtensionFactory 和 SpringExtensionFactory。
+// 前者用于创建自适应的拓展，后者是用于从 Spring 的 IOC 容器中获取所需的拓展。
     private T injectExtension(T instance) {
 
         if (objectFactory == null) {
@@ -714,15 +733,19 @@ public class ExtensionLoader<T> {
                 if (method.getAnnotation(DisableInject.class) != null) {
                     continue;
                 }
+                // 获取 setter 方法参数类型
                 Class<?> pt = method.getParameterTypes()[0];
                 if (ReflectUtils.isPrimitives(pt)) {
                     continue;
                 }
 
                 try {
+//                    获取属性名，比如 setName 方法对应属性名 name
                     String property = getSetterProperty(method);
+                    // 从 ObjectFactory(AdaptiveExtensionFactory) 中获取依赖对象
                     Object object = objectFactory.getExtension(pt, property);
                     if (object != null) {
+                        // 通过反射调用 setter 方法设置依赖
                         method.invoke(instance, object);
                     }
                 } catch (Exception e) {
@@ -778,6 +801,7 @@ public class ExtensionLoader<T> {
         return getExtensionClasses().get(name);
     }
 
+    //为cachedClasses赋值
     private Map<String, Class<?>> getExtensionClasses() {
         Map<String, Class<?>> classes = cachedClasses.get();
         if (classes == null) {
@@ -859,7 +883,7 @@ public class ExtensionLoader<T> {
                     urls = ClassLoader.getSystemResources(fileName);
                 }
             }
-        //这边的思路是先获得完整的文件名，遍历每一个文件，在loadResource方法中去加载每个文件的内容。
+            //这边的思路是先获得完整的文件名，遍历每一个文件，在loadResource方法中去加载每个文件的内容。
             if (urls != null) {
                 while (urls.hasMoreElements()) {
                     java.net.URL resourceURL = urls.nextElement();
@@ -920,7 +944,8 @@ public class ExtensionLoader<T> {
         }
         return false;
     }
-//根据配置文件中的value加载扩展类
+
+    //根据配置文件中的value加载扩展类
     private void loadClass(Map<String, Class<?>> extensionClasses, java.net.URL resourceURL, Class<?> clazz, String name,
                            boolean overridden) throws NoSuchMethodException {
         //该类是否实现扩展接口
@@ -1062,6 +1087,11 @@ public class ExtensionLoader<T> {
         }
     }
 
+    /**
+     *  adaptive注解在类和方法上的区别：
+     *  1、注解在类上：代表人工实现编码，即实现了一个装饰类（装饰模式），例如：ExtensionFactory
+     *  2、注解在方法上：代表自动生成和编译一个动态的adpative类，例如：Protocol$Adaptive
+     */
     private Class<?> getAdaptiveExtensionClass() {
         getExtensionClasses();
         if (cachedAdaptiveClass != null) {
@@ -1069,7 +1099,7 @@ public class ExtensionLoader<T> {
         }
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
-
+    //自动生成和编译一个动态的adpative类，这个类是一个代理类
     private Class<?> createAdaptiveExtensionClass() {
         // //创建动态生成的适配器类代码
         String code = new AdaptiveClassCodeGenerator(type, cachedDefaultName).generate();

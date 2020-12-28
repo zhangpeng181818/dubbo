@@ -1,0 +1,5 @@
+1、AtomicIntegerFieldUpdater、AtomicInteger区别(https://my.oschina.net/u/4072299/blog/3115164)
+2、volatile
+3、CountDownLatch（https://www.jianshu.com/p/e233bb37d2e6）
+4、LinkedBlockingQueue
+5、System.nanoTime()（https://blog.csdn.net/qq_31388481/article/details/86521971）

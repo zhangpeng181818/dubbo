@@ -190,46 +190,65 @@ public class RegistryProtocol implements Protocol {
                 registered));
     }
 
+//    获得服务提供者的url，再通过override数据重新配置url，然后执行doLocalExport()进行服务暴露。
+//    加载注册中心实现类，向注册中心注册服务。
+//    向注册中心进行订阅 override 数据。
+//    创建并返回 DestroyableExporter
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
+        // 获得注册中心的url
         URL registryUrl = getRegistryUrl(originInvoker);
         // url to export locally
+        //获得已经注册的服务提供者url
         URL providerUrl = getProviderUrl(originInvoker);
 
         // Subscribe the override data
         // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call
         //  the same service. Because the subscribed is cached key with the name of the service, it causes the
         //  subscription information to cover.
+        // 获取override订阅 URL
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);
+        // 创建override的监听器
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
+        // 把监听器添加到集合
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
-
+        // 根据override的配置来覆盖原来的url，使得配置是最新的。
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
+        // 服务暴露
         //export invoker
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
+        // 根据 URL 加载 Registry 实现类，比如ZookeeperRegistry
         final Registry registry = getRegistry(originInvoker);
+        // 返回注册到注册表的url并过滤url参数一次
         final URL registeredProviderUrl = getUrlToRegistry(providerUrl, registryUrl);
 
+
         // decide if we need to delay publish
+        // 获取 register 参数
         boolean register = providerUrl.getParameter(REGISTER_KEY, true);
+        // 如果需要注册服务
         if (register) {
+            // 向注册中心注册服务
             register(registryUrl, registeredProviderUrl);
         }
 
         // register stated url on provider model
         registerStatedUrl(registryUrl, registeredProviderUrl, register);
 
-
+        // 设置注册中心url
         exporter.setRegisterUrl(registeredProviderUrl);
+        // 设置override数据订阅的url
         exporter.setSubscribeUrl(overrideSubscribeUrl);
 
         // Deprecated! Subscribe to override rules in 2.6.x or before.
+        // 向注册中心进行订阅 override 数据
         registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
 
         notifyExport(exporter);
         //Ensure that a new exporter instance is returned every time export
+        // 创建并返回 DestroyableExporter
         return new DestroyableExporter<>(exporter);
     }
 

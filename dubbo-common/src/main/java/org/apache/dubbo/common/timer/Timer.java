@@ -23,6 +23,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Schedules {@link TimerTask}s for one-time future execution in a background
  * thread.
+ *
+ *
+ * 这个接口是一个调度的核心接口，从注释可以看出，它主要用于在后台执行一次性的调度。
+ * 它有一个isStop方法，用来判断这个调度器是否停止运行，
+ * 还有一个stop方法用来停止调度器的运行。
+ * 再看newTimeout这个方法，这个方法就是把一个任务扔给调度器执行，
+ * 第一个参数类型TimerTask，即需要执行的任务，第二个参数类型long，即执行此任务的相对延迟时间，
+ * 第三个是一个时间单位，也就是第二个参数对应的时间单位。
  */
 public interface Timer {
 

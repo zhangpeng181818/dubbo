@@ -19,28 +19,34 @@ package org.apache.dubbo.common.timer;
 /**
  * A handle associated with a {@link TimerTask} that is returned by a
  * {@link Timer}.
+ *
+ * Timeout代表的是对一次任务的处理。
  */
 public interface Timeout {
 
     /**
      * Returns the {@link Timer} that created this handle.
+     * timer方法返回的就是创建这个Timeout的Timer对象
      */
     Timer timer();
 
     /**
      * Returns the {@link TimerTask} which is associated with this handle.
+     * task返回的是这个Timeout处理的任务
      */
     TimerTask task();
 
     /**
      * Returns {@code true} if and only if the {@link TimerTask} associated
      * with this handle has been expired.
+     * isExpired代表的是这个任务是否已经超过它预设的时间
      */
     boolean isExpired();
 
     /**
      * Returns {@code true} if and only if the {@link TimerTask} associated
      * with this handle has been cancelled.
+     * isCancelled是返回是否已取消此任务
      */
     boolean isCancelled();
 
@@ -50,6 +56,7 @@ public interface Timeout {
      * no side effect.
      *
      * @return True if the cancellation completed successfully, otherwise false
+     * cancel则是取消此任务
      */
     boolean cancel();
 }

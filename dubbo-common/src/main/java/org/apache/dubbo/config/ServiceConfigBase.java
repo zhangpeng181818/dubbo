@@ -151,6 +151,7 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
     public boolean shouldExport() {
         Boolean export = getExport();
         // default value is true
+        //export为false ， 那就不发布，直接返回。
         return export == null ? true : export;
     }
 
