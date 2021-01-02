@@ -1,0 +1,28 @@
+1、proxyFactory：就是为了获取一个接口的代理类，例如获取一个远程接口的代理。
+    a: <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) throws RpcException;
+        针对server端，将服务对象，如org.apache.dubbo.demo.DemoServiceImpl包装成一个Invoker对象
+    b: <T> T getProxy(Invoker<T> invoker) throws RpcException
+        针对客户端，创建接口的代理对象，例如DemoService的接口
+2、Wrapper：类似spring的BeanWrapper,它就是包装了一个接口或一个类，可以通过wrapper对实例对象进行赋值取值、以及指定方法的调用。
+
+3、Invoker：它是一个可执行对象，能够根据方法的名称，参数得到相应的执行结果
+            Result invoke(Invocation invocation) throws RpcException
+   Invocation包含了需要执行的方法和参数等重要信息，目前只有2个实现类。(RpcInvocation、MockInvocation)
+   3种类型的Invoker：
+        a、本地执行类的Invoker
+        b、远程通信类的Invoker
+        c、多个远程通信执行类的Invoker聚合成集群版的Invoker
+
+4、Protocol
+   a、export：暴露远程服务（用于服务端），就是将proxyFactory.getInvoker创建的代理类invoker对象，通过协议暴露给外部。
+   b、refer： 引用远程服务（用于客户端）
+
+5、exporter：维护invoker的生命周期。
+
+6、exchanger：信息交换层，封装请求响应模式，同步转异步。
+
+7、transporter:网络传输层，用来抽象netty。
+
+8、zk持久化节点和临时节点有什么区别？
+持久化节点：一旦被创建，除非主动删除掉，否则就一直存储在zk里面。
+临时节点：与客户端会话绑定，一旦客户端会话失效，这个客户端所创建的所有临时节点都会被删除。

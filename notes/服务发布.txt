@@ -1,0 +1,127 @@
+1、注册本地服务
+config.ServiceConfig:  [DUBBO] Export dubbo service org.apache.dubbo.demo.DemoService to local registry url : injvm://127.0.0.1/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-api-provider&bind.ip=192.168.0.100&bind.port=20880&default=true&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=14139&release=&side=provider&timestamp=1609326435121, dubbo version: , current host: 192.168.0.100
+2、暴露远程服务
+config.ServiceConfig:  [DUBBO] Register dubbo service org.apache.dubbo.demo.DemoService url dubbo://192.168.0.100:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-api-provider&bind.ip=192.168.0.100&bind.port=20880&default=true&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=14139&release=&side=provider&timestamp=1609326435121 to registry registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-provider&dubbo=2.0.2&pid=14139&registry=zookeeper&timestamp=1609326430094, dubbo version: , current host: 192.168.0.100
+3、启动Netty
+transport.AbstractServer:  [DUBBO] Start NettyServer bind /0.0.0.0:20880, export /192.168.0.100:20880, dubbo version: , current host: 192.168.0.100
+zookeeper.ZookeeperRegistry:  [DUBBO] Load registry cache file /Users/mdk/.dubbo/dubbo-registry-dubbo-demo-api-provider-127.0.0.1-2181.cache, data: {org.apache.dubbo.demo.DemoService=empty://192.168.0.100:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-api-provider&bind.ip=192.168.0.100&bind.port=20880&category=configurators&check=false&default=true&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=94939&release=&side=provider&timestamp=1609058285181}, dubbo version: , current host: 192.168.0.100
+4、打开连接ZK
+zookeeper.ClientCnxn: Opening socket connection to server localhost/127.0.0.1:2181. Will not attempt to authenticate using SASL (unknown error)
+5、到ZK注册
+zookeeper.ZookeeperRegistry:  [DUBBO] Register: dubbo://192.168.0.100:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-api-provider&default=true&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=14139&release=&side=provider&timestamp=1609326435121, dubbo version: , current host: 192.168.0.100
+6、监听ZK
+zookeeper.ZookeeperRegistry:  [DUBBO] Subscribe: provider://192.168.0.100:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-api-provider&bind.ip=192.168.0.100&bind.port=20880&category=configurators&check=false&default=true&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=14139&release=&side=provider&timestamp=1609326435121, dubbo version: , current host: 192.168.0.100
+zookeeper.ZookeeperRegistry:  [DUBBO] Notify urls for subscribe url provider://192.168.0.100:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-api-provider&bind.ip=192.168.0.100&bind.port=20880&category=configurators&check=false&default=true&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=14139&release=&side=provider&timestamp=1609326435121, urls: [empty://192.168.0.100:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-api-provider&bind.ip=192.168.0.100&bind.port=20880&category=configurators&check=false&default=true&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello,sayHelloAsync&pid=14139&release=&side=provider&timestamp=1609326435121], dubbo version: , current host: 192.168.0.100
+
+
+
+doExport
+    doExportUrls
+        loadRegistries
+            doExportUrlsFor1Protocol
+                exportLocal//本地暴露
+                    PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, local)
+                        ExtensionLoader.getExtensionLoader(org.apache.dubbo.rpc.ProxyFactory.class).getExtension("javassist")
+                            extension.getInvoker(arg0, arg1, arg2)
+                                StubProxyFactoryWrapper.getInvoker(T proxy, Class<T> type, URL url)
+                                    JavassistProxyFactory.getInvoker(proxy, type, url)
+                                        Wrapper.getWrapper("org.apache.dubbo.demo.provider.DemoServiceImpl")
+                                            return new AbstractProxyInvoker<T>(proxy, type, url)
+                    PROTOCOL.export
+                         Protocol$Adaptive.export
+                             ExtensionLoader.getExtensionLoader(org.apache.dubbo.rpc.Protocol.class).getExtension("injvm")
+                                extension.refer(arg0, arg1)
+                                    ProtocolFilterWrapper.export
+                                        buildInvokerChain//创建8个filter
+                                            ProtocolListenerWrapper.export
+                                                InjvmProtocol
+                                                    exporterMap.put(key, this);//key:org.apache.dubbo.demo.DemoService value:InjvmExporter
+             // 远程暴露
+                PROXY_FACTORY.getInvoker //获取invoker对象
+                    Protocol$Adaptive.export(wrapperInvoker)
+                        ExtensionLoader.getExtensionLoader(org.apache.dubbo.rpc.Protocol.class).getExtension("registry")
+                            ProtocolFilterWrapper.export("DelegateProviderMetaDataInvoker")
+                                ProtocolListenerWrapper.export(DelegateProviderMetaDataInvoker)
+                                    InterfaceCompatibleRegistryProtocol.export(DelegateProviderMetaDataInvoker);
+                                        RegistryProtocol.export()
+                                            doLocalExport
+                                                getCacheKey(originInvoker)//
+                                                    Protocol$Adaptive.export
+                                                        ExtensionLoader.getExtensionLoader(org.apache.dubbo.rpc.Protocol.class).getExtension("dubbo")
+                                                            ProtocolFilterWrapper.export(arg0)
+                                                                 buildInvokerChain//创建8个filter
+                                                                    ProtocolListenerWrapper.export
+             //netty服务暴露的开始                                       DubboProtocol.export
+                                                                            serviceKey(url)//key:org.apache.dubbo.demo.DemoService:20880
+                                                                                exporterMap.put(key, exporter)//key:org.apache.dubbo.demo.DemoService:20880 //exporter:dubboExporter
+                                                                                    openServer(url);
+                                                                                        createServer(url)
+             //信息交换层 exchanger                                                          Exchangers.bind(url, requestHandler);
+                                                                                                getExchanger(url)
+                                                                                                    ExtensionLoader.getExtensionLoader(Exchanger.class).getExtension("header")
+                                                                                                        HeaderExchanger.bind(url, handler)
+                                                                                                            new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))))
+             //网络传输层 transporter                                                                           getTransporter().bind(url, handler)
+                                                                                                                    ExtensionLoader.getExtensionLoader(org.apache.dubbo.remoting.Transporter.class).getExtension("netty")
+                                                                                                                        NettyTransporter.bind(arg0, arg1);
+                                                                                                                            new NettyServer(url, handler)
+             //打开端口，暴露netty服务                                                                                            doOpen()
+                                            getRegistry(originInvoker)  //zk连接
+                                                registryFactory.getRegistry(registryUrl)
+                                                    ExtensionLoader.getExtensionLoader(org.apache.dubbo.registry.RegistryFactory.class).getExtension("zookeeper");
+                                                        extension.getRegistry(arg0)//extension:RegistryFactoryWrapper
+                                                            AbstractRegistryFactory.getRegistry//创建一个注册中心，存储在 REGISTRIES
+                                                                createRegistry(url);
+                                                                    new ZookeeperRegistry(url, zookeeperTransporter)
+                                                                        AbstractRegistry
+                                                                            loadProperties()//把文件中的内容加载为Properties
+                                                                                notify(url.getBackupUrls())
+                                                                        FailbackRegistry
+                                                                        ZookeeperRegistry
+                                                                            zookeeperTransporter.connect(url)
+                                                                                ExtensionLoader.getExtensionLoader(org.apache.dubbo.remoting.zookeeper.ZookeeperTransporter.class).getExtension("curator");
+                                                                                    extension.connect(arg0);
+                                                                                        AbstractZookeeperTransporter
+                                                                                            createZookeeperClient(url)
+                                                                                                new CuratorZookeeperClient(url)
+                                                                                                    client.start()//连接zk
+                                                                                            writeToClientMap(addressList, zookeeperClient)
+                                                                REGISTRIES.put(key, registry)
+                                            register(registryUrl, registeredProviderUrl)
+                                                registry.register(registeredProviderUrl)
+                                                    ListenerRegistryWrapper.register(URL url)
+                                                        FailbackRegistry.register(URL url)
+                                                            doRegister(url)//向zk发出注册请求
+                                                                ZookeeperRegistry.doRegister(URL url)
+                                                                    zkClient.create(toUrlPath(url), url.getParameter(DYNAMIC_KEY, true))
+                                                                        AbstractZookeeperClient.create(String path, boolean ephemeral)//  /dubbo/org.apache.dubbo.demo.DemoService/providers/dubbo%3A%2F%2F192.168.0.100%3A20880%2Forg.apache.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddubbo-demo-api-provider%26default%3Dtrue%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic%3Dtrue%26generic%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService%26methods%3DsayHello%2CsayHelloAsync%26pid%3D841%26release%3D%26side%3Dprovider%26timestamp%3D1609574806261
+                                                                            createEphemeral(path)//临时节点
+                                                                            createPersistent(path)//持久化节点
+                                            //订阅
+                                            registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener)
+                                                ListenerRegistryWrapper.subscribe(URL url, NotifyListener listener)
+                                                    registry.subscribe(url, listener);
+                                                        FailbackRegistry.subscribe(URL url, NotifyListener listener)
+                                                            doSubscribe(url, listener);
+                                                                ZookeeperRegistry.doSubscribe(final URL url, final NotifyListener listener)
+                                                                    ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.computeIfAbsent(url, k -> new ConcurrentHashMap<>());
+                                                                    ChildListener zkListener = listeners.computeIfAbsent(listener, k -> (parentPath, currentChilds) -> ZookeeperRegistry.this.notify(url, k, toUrlsWithEmpty(url, parentPath, currentChilds)));
+                                                                    zkClient.create(path, false);//1、创建持久化节点 /dubbo/org.apache.dubbo.demo.DemoService/configurators
+                                                                    zkClient.addChildListener(path, zkListener)//2、启动加入订阅
+                                                                        AbstractZookeeperClient.addChildListener(String path, final ChildListener listener)
+                                                                    notify(url, listener, urls)
+                                                                        FailbackRegistry.notify
+                                                                            FailbackRegistry.doNotify(URL url, NotifyListener listener, List<URL> urls)    //收到订阅后处理，交给FailbackRegistry.notify
+                                                                                AbstractRegistry.notify(URL url, NotifyListener listener, List<URL> urls)
+                                                                                    listener.notify(categoryList);
+                                                                                        RegistryProtocol.notify(List<URL> urls)
+                                                                                    saveProperties(url);//把服务端注册url信息更新到文件
+                                                                                        registryCacheExecutor.execute(new SaveProperties(version))//线程池处理
+
+
+
+
+
+
+
+
