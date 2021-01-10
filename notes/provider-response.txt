@@ -1,0 +1,37 @@
+NettyHandler.messageReceived
+    AbstractPeer.received
+        MultiMessageHandler.received
+            AllChannelHandler.received
+                ChannelEventRunnable.run//线程池 执行线程
+                    DecodeHandler.received
+                        HeaderExchangeHandler.received
+                            handleRequest(exchangeChannel, request);
+                                handler.reply(channel, msg)
+                                    DubboProtocol.reply
+                                        ProtocolFilterWrapper.invoke
+                                            MonitorFilter.invoke
+                                                TimeoutFilter
+                                                    TraceFilter
+                                                        ContextFilter
+                                                            GenericFilter
+                                                                ClassLoaderFilter.invoke
+                                                                    EchoFilter.invoke
+                                channel.send(res);
+                                    AbstractPeer.send
+                                        NettyChannel.send
+                                            ChannelFuture future = channel.writeAndFlush(message);
+
+
+
+NettyHandler.messageReceived
+     AbstractPeer.received
+            MultiMessageHandler.received
+                AllChannelHandler.received
+                    ChannelEventRunnable.run//线程池 执行线程
+                        DecodeHandler.received
+                            HeaderExchangeHandler.received
+                                handleResponse(channel, (Response) message)
+                                    DefaultFuture.received
+                                        future.doReceived(response)
+
+
